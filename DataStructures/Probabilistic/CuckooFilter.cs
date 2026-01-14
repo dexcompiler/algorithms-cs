@@ -258,7 +258,7 @@ public class CuckooFilter<T> where T : notnull
     /// </summary>
     private bool CuckooInsert(int index1, int index2, uint fingerprint)
     {
-        var random = new Random();
+        var random = Random.Shared;
         var currentIndex = random.Next(2) == 0 ? index1 : index2;
         var currentFingerprint = fingerprint;
 
@@ -294,7 +294,7 @@ public class CuckooFilter<T> where T : notnull
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private uint HashFingerprint(uint fingerprint)
     {
-        // Simple multiplicative hash
+        // Simple multiplicative hash using MurmurHash2 constant for good distribution
         return fingerprint * 0x5bd1e995;
     }
 }

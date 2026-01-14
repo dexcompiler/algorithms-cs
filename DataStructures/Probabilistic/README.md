@@ -213,7 +213,7 @@ For 0.1% false positive rate:
 
 When implementing probabilistic data structures in C#, consider:
 
-1. **Span&lt;T&gt; and Memory&lt;T&gt;**: Reduce allocations for temporary buffers
+1. **Span\<T\> and Memory\<T\>**: Reduce allocations for temporary buffers
 2. **stackalloc**: Stack-allocate small arrays for better cache locality
 3. **BitArray vs byte[]**: Choose based on access patterns
 4. **HashCode.Combine**: Use built-in hash combining for better distribution
