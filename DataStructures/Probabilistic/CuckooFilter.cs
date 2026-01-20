@@ -262,14 +262,20 @@ public class CuckooFilter<T> where T : notnull
         var currentIndex = random.Next(2) == 0 ? index1 : index2;
         var currentFingerprint = fingerprint;
 
+        // Track the path for potential rollback
+        var swapHistory = new List<(int BucketIndex, int Position, uint OldValue)>();
+
         for (int i = 0; i < MaxKicks; i++)
         {
             // Randomly select a position in the bucket to evict
             var pos = random.Next(bucketSize);
             var bucket = buckets[currentIndex];
 
-            // Swap the fingerprints
+            // Record the swap for potential rollback
             var temp = bucket[pos];
+            swapHistory.Add((currentIndex, pos, temp));
+
+            // Swap the fingerprints
             bucket[pos] = currentFingerprint;
             currentFingerprint = temp;
 
@@ -284,7 +290,13 @@ public class CuckooFilter<T> where T : notnull
             }
         }
 
-        // Failed to insert after max kicks - filter is effectively full
+        // Failed to insert after max kicks - rollback all changes to prevent data loss
+        for (int i = swapHistory.Count - 1; i >= 0; i--)
+        {
+            var (bucketIndex, position, oldValue) = swapHistory[i];
+            buckets[bucketIndex][position] = oldValue;
+        }
+
         return false;
     }
 

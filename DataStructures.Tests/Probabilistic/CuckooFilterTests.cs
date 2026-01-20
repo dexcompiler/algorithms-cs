@@ -360,6 +360,51 @@ public class CuckooFilterTests
         }
     }
 
+    [Test]
+    public void FailedInsert_RollsBackChanges_NoDataLoss()
+    {
+        // Create a small filter that will fill up quickly
+        var filter = new CuckooFilter<int>(capacity: 20, bucketSize: 2, fingerprintBits: 8);
+        var insertedItems = new HashSet<int>();
+        
+        // Fill the filter to near capacity
+        for (int i = 0; i < 30; i++)
+        {
+            if (filter.Insert(i))
+            {
+                insertedItems.Add(i);
+            }
+        }
+
+        // Track items before attempting to overflow
+        var itemsBeforeOverflow = new HashSet<int>(insertedItems);
+        
+        // Try to insert more items until we get a failure
+        bool failureOccurred = false;
+        for (int i = 100; i < 200 && !failureOccurred; i++)
+        {
+            if (!filter.Insert(i))
+            {
+                failureOccurred = true;
+                
+                // Verify all previously inserted items are still in the filter
+                foreach (var item in itemsBeforeOverflow)
+                {
+                    Assert.That(filter.Contains(item), Is.True, 
+                        $"Item {item} was lost after failed insertion! This indicates data loss.");
+                }
+            }
+            else
+            {
+                insertedItems.Add(i);
+                itemsBeforeOverflow.Add(i);
+            }
+        }
+
+        // Ensure we actually tested the failure case
+        Assert.That(failureOccurred, Is.True, "Test should have triggered at least one insertion failure");
+    }
+
     private class CustomObject(string name, int age)
     {
         public string Name { get; } = name;
