@@ -262,8 +262,8 @@ public class CuckooFilter<T> where T : notnull
         var currentIndex = random.Next(2) == 0 ? index1 : index2;
         var currentFingerprint = fingerprint;
 
-        // Track the path for potential rollback
-        var swapHistory = new List<(int BucketIndex, int Position, uint OldValue)>();
+        // Track the path for potential rollback - pre-allocate to avoid repeated allocations
+        var swapHistory = new List<(int BucketIndex, int Position, uint OldValue)>(MaxKicks);
 
         for (int i = 0; i < MaxKicks; i++)
         {
@@ -291,6 +291,8 @@ public class CuckooFilter<T> where T : notnull
         }
 
         // Failed to insert after max kicks - rollback all changes to prevent data loss
+        // Note: This assumes the buckets array structure remains unchanged during the operation
+        // (no concurrent modifications, no resize operations during eviction)
         for (int i = swapHistory.Count - 1; i >= 0; i--)
         {
             var (bucketIndex, position, oldValue) = swapHistory[i];
