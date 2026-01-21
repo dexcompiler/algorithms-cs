@@ -35,6 +35,24 @@ public class CuckooFilterTests
     }
 
     [Test]
+    public void Constructor_WithExcessiveCapacity_ThrowsException()
+    {
+        // Test that excessively large capacity (that would cause overflow) throws exception
+        Assert.Throws<ArgumentException>(() => new CuckooFilter<int>(capacity: int.MaxValue, bucketSize: 1));
+        Assert.Throws<ArgumentException>(() => new CuckooFilter<int>(capacity: 2_000_000_000, bucketSize: 1));
+    }
+
+    [Test]
+    public void Constructor_WithLargeButValidCapacity_Succeeds()
+    {
+        // Test that large but valid capacities work
+        // With bucketSize=4, capacity of 100M should be fine (requires ~26M buckets)
+        var filter = new CuckooFilter<int>(capacity: 100_000_000, bucketSize: 4);
+        Assert.That(filter, Is.Not.Null);
+        Assert.That(filter.Capacity, Is.GreaterThan(0));
+    }
+
+    [Test]
     public void Insert_SingleItem_ReturnsTrue()
     {
         var filter = new CuckooFilter<int>(capacity: 100);

@@ -23,6 +23,12 @@ public class CuckooFilter<T> where T : notnull
             return 1;
         }
 
+        // Guard against overflow: if value > 2^30, return 2^30 (largest power of 2 that fits in int)
+        if (value > 0x40000000)
+        {
+            return 0x40000000; // 2^30 = 1,073,741,824
+        }
+
         value--;
         value |= value >> 1;
         value |= value >> 2;
@@ -67,7 +73,19 @@ public class CuckooFilter<T> where T : notnull
         fingerprintMask = (1u << fingerprintBits) - 1;
 
         // Calculate number of buckets for target load factor of ~95%
-        numBuckets = NextPowerOfTwo((int)Math.Ceiling(capacity / (bucketSize * 0.95)));
+        // Use long arithmetic to prevent overflow, then safely cast to int
+        long requiredBuckets = (long)Math.Ceiling(capacity / (bucketSize * 0.95));
+
+        // Cap at maximum safe value to prevent overflow in NextPowerOfTwo
+        if (requiredBuckets > 0x40000000)
+        {
+            throw new ArgumentException(
+                $"Requested capacity {capacity} with bucket size {bucketSize} exceeds maximum supported size. " +
+                $"Maximum capacity is approximately {0x40000000L * bucketSize * 95 / 100} items.",
+                nameof(capacity));
+        }
+
+        numBuckets = NextPowerOfTwo((int)requiredBuckets);
 
         buckets = new uint[numBuckets][];
         for (int i = 0; i < numBuckets; i++)
