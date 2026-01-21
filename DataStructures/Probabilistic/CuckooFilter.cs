@@ -81,7 +81,7 @@ public class CuckooFilter<T> where T : notnull
         {
             throw new ArgumentException(
                 $"Requested capacity {capacity} with bucket size {bucketSize} exceeds maximum supported size. " +
-                $"Maximum capacity is approximately {0x40000000L * bucketSize * 95 / 100} items.",
+                $"Maximum capacity is approximately {(long)(0x40000000L * bucketSize * 0.95)} items.",
                 nameof(capacity));
         }
 
